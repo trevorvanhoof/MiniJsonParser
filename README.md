@@ -1,10 +1,14 @@
 # MiniJsonParser
 
-C# Read json to generic dictionary
+C# - Read json to generic dictionary ( System.Collections.Dictionary<String, TTJson.Value> )
 
-There does not seem an accessible way to read a json file into a generic dictionary.
-I made a minimal example, surely missing some Json features, but it does the job I wanted it to do.
+#### Why?
 
-TODO:
+I am in an old Unity version that does not have System.Text.Json available.
+I could not easily find a lightweight solution like this, only larger multi-purpose libraries.
+
+This is a single file drop-in solution, I write it in a short amount of time to solve my immediate need, so be warned that there may be bugs, bad performance, and missing features!
+
+#### TODO:
 1. Serialization
 2. Make escaped and unicode character parsing less horrific
