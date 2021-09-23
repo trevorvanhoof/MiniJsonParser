@@ -9,19 +9,26 @@ namespace TTJson {
             Double,
             String,
             List,
-            Object
+            Object,
+            Bool,
+            Null
         };
 
         public readonly EType valueType;
+        public readonly bool boolValue;
         public readonly int intValue;
         public readonly double doubleValue;
         public readonly string stringValue;
         public readonly List<Value> listValue;
         public readonly Dictionary<string, Value> objectValue;
 
-        public Value(string stringValue) {
-            valueType = EType.String;
-            this.stringValue = stringValue;
+        public Value() {
+            valueType = EType.Null;
+        }
+
+        public Value(bool boolValue) {
+            valueType = EType.Bool;
+            this.boolValue = boolValue;
         }
 
         public Value(int intValue) {
@@ -32,6 +39,11 @@ namespace TTJson {
         public Value(double doubleValue) {
             valueType = EType.Double;
             this.doubleValue = doubleValue;
+        }
+
+        public Value(string stringValue) {
+            valueType = EType.String;
+            this.stringValue = stringValue;
         }
 
         public Value(List<Value> listValue) {
@@ -101,11 +113,31 @@ namespace TTJson {
             while (true) {
                 char chr = _text[_cursor];
                 _cursor += 1;
-                if (skip) continue;
+                if (skip) {
+                    skip = false;
+                    continue;
+                }
                 if (chr == '"') break;
                 skip = chr == '\\';
             }
-            return _text.Substring(start, _cursor - start - 1);
+            string raw = _text.Substring(start, _cursor - start - 1);
+            // Decode escaped character pairs
+            string suffixes = "\"\\/bfnrt";
+            string characters = "\"\\/\b\f\n\r\t";
+            for (int i = 0; i < suffixes.Length; ++i)
+                raw = raw.Replace("\\" + suffixes[i], characters[i].ToString());
+            // Decode unicode characters
+            start = 0;
+            while (true) {
+                start = raw.IndexOf("\\u", start);
+                if (start == -1) break;
+                string hex = raw.Substring(start + 2, 4);
+                int code = int.Parse(hex, System.Globalization.NumberStyles.HexNumber);
+                string unicodeString = char.ConvertFromUtf32(code);
+                raw = raw.Substring(start) + unicodeString + raw.Substring(start + 6);
+                start += unicodeString.Length;
+            }
+            return raw;
         }
 
         private List<Value> ConsumeArray() {
@@ -141,6 +173,18 @@ namespace TTJson {
             }
             if (chr == '{') {
                 return new Value(ConsumeObject());
+            }
+            // Look-ahead for null and booleans
+            if (_cursor + 5 < _text.Length) {
+                if (_text.Substring(_cursor, 5).ToLower() == "false") {
+                    return new Value(false);
+                }
+                if (_text.Substring(_cursor, 4).ToLower() == "true") {
+                    return new Value(true);
+                }
+                if (_text.Substring(_cursor, 4).ToLower() == "null") {
+                    return new Value();
+                }
             }
             return ConsumeNumber();
         }
