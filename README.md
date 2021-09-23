@@ -6,4 +6,5 @@ There does not seem an accessible way to read a json file into a generic diction
 I made a minimal example, surely missing some Json features, but it does the job I wanted it to do.
 
 TODO:
-1. Make escaped and unicode character parsing less horrific
+1. Serialization
+2. Make escaped and unicode character parsing less horrific
